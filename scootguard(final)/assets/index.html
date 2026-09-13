@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>E-Scooter Safety Dashboard</title>
+</head>
+
+<div id="ai-status-box" style="
+  padding: 20px;
+  margin: 20px;
+  border-radius: 12px;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  transition: background-color 0.3s;
+">
+  AI Classification: <span id="ai-label">-</span>
+  (Confidence: <span id="ai-confidence">-</span>)
+</div>
+
+<script>
+async function updateAIStatus() {
+  try {
+    const res = await fetch('/dashboard');
+    const data = await res.json();
+
+    const box = document.getElementById('ai-status-box');
+    const labelSpan = document.getElementById('ai-label');
+    const confSpan = document.getElementById('ai-confidence');
+
+    labelSpan.textContent = data.ai_result;
+    confSpan.textContent = data.ai_confidence;
+
+    // Change color based on the label
+    if (data.ai_result.includes('unstable')) {
+      box.style.backgroundColor = '#ff4d4d';  // Red: Unstable
+      box.style.color = 'white';
+    } else if (data.ai_result.includes('turn')) {
+      box.style.backgroundColor = '#ffd24d';  // Yellow: Turn
+      box.style.color = 'black';
+    } else {
+      box.style.backgroundColor = '#4dff88';  // Green: Normal
+      box.style.color = 'black';
+    }
+  } catch (e) {
+    console.error('Dashboard update failed:', e);
+  }
+}
+
+setInterval(updateAIStatus, 300);  // Update every 0.3 seconds
+updateAIStatus();
+</script>
+  
+<body>
+
+    <h1>E-Scooter Safety Dashboard</h1>
+
+    <h2 id="permission">Ride Permission: --</h2>
+    <h2 id="alcohol">Alcohol Value: --</h2>
+    <h2 id="alcoholStatus">Alcohol Status: --</h2>
+    <h2 id="motion">Motion Status: --</h2>
+    <h2 id="warn">Safety Warnings: --</h2>
+
+    <script>
+
+    async function updateData() {
+
+        const data =
+            await (await fetch("/dashboard")).json();
+
+        let permission = "🔴 BLOCKED";
+        let alcoholStatus = "No Breath";
+        let motion = "Unknown";
+
+        if (data.permission == 1)
+            permission = "🟢 ALLOWED";
+        else
+            permission = "🔴 BLOCKED";
+
+        if (data.alcohol_status == 0)
+            alcoholStatus = "No Breath";
+        else if (data.alcohol_status == 1)
+            alcoholStatus = "Normal Breath";
+        else if (data.alcohol_status == 2)
+            alcoholStatus = "Alcohol Breath";
+
+        if (data.state == 0)
+            motion = "Stationary";
+
+        if (data.state == 1 || data.state == 2)
+            motion = "Normal Riding";
+
+        if (data.state == 3 || data.state == 4)
+            motion = "Unsafe Riding";
+      
+        if (data.state == 5)
+            motion = "Decel";
+
+        document.getElementById("permission").innerText =
+            "Ride Permission: " + permission;
+
+        document.getElementById("alcohol").innerText =
+            "Alcohol Value: " + data.alcohol;
+
+        document.getElementById("alcoholStatus").innerText =
+            "Alcohol Status: " + alcoholStatus;
+            
+        document.getElementById("motion").innerText =
+            "Motion Status: " + motion;
+
+        document.getElementById("warn").innerText =
+            "Safety Warnings: " + data.warn;
+    }
+
+    setInterval(updateData, 1000);
+
+    updateData();
+
+    </script>
+
+</body>
+</html>
